@@ -2,33 +2,40 @@ package main
 
 import (
 	"fmt"
-	"os"
+	"net"
 	"bytes"
 	"io"
 )
 
 func main () {
-	file, err := os.Open("messages.txt")
+	ln, err := net.Listen("tcp", ":8080")
 
 	if err != nil {
-		fmt.Println("error opening the file")
+		fmt.Println("error listening to the tcp connection")
 	}
 	
-	lines := getLinesChannel(file)
+	for {
+		conn, err := ln.Accept()
 
-	for line := range(lines) {
-		fmt.Printf("read: %s\n", line)
+		if err != nil {
+			fmt.Println("error Accecpting the connection")
+		}
+
+		for line := range getLinesChannel(conn) {
+			fmt.Printf("read: %s\n", line)
+		}
 	}
 }
 
 func getLinesChannel(file io.ReadCloser) <-chan string {
-	out := make(chan string, 1)
+	out := make(chan string, 2)
 	var str string = ""
 
 	go func(){
 		defer close(out)
 		defer file.Close()
-		for  {
+		for {
+			
 			data := make([]byte, 8)
 			count, err := file.Read(data)
 			data = data[:count]
