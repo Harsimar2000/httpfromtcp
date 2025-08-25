@@ -41,9 +41,11 @@ func getLinesChannel(file io.ReadCloser) <-chan string {
 			data = data[:count]
 
 			if err != nil {
+				if len(str) != 0 {
+					out <- str // flush the last buffered chunk (e.g. JSON body without '\n')
+				}
 				return
 			}
-
 			if i:=bytes.IndexByte(data,'\n'); i!=-1 {
 				str += string(data[:i])
 				data = data[i+1:]
